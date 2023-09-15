@@ -5,6 +5,7 @@
     <title>WebSocket Chat</title>
 </head>
 <body>
+<input type="text" id="idInput" placeholder="ID">
 <input type="text" id="message" placeholder="メッセージを入力">
 <button onclick="sendMessage()">送信</button>
 <div id="chat"></div>
@@ -16,7 +17,8 @@
     webSocket.onmessage = (event) => {
         const chat = document.getElementById("chat");
         const message = document.createElement("p");//pタグ作成
-        message.textContent = event.data;
+        const indata = JSON.parse(event.data);
+        message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
         chat.appendChild(message);
     };
 
@@ -24,7 +26,14 @@
     function sendMessage() {
         const messageInput = document.getElementById("message");
         const message = messageInput.value;
-        webSocket.send(message);
+        const idInput = document.getElementById("idInput");
+        const clientId = idInput.value;
+        // JavaScriptオブジェクトを作成
+        const data = {"client_id": clientId, "message": message}
+        // JSONへ変換
+        const jsonData = JSON.stringify(data);
+        // 送信
+        webSocket.send(jsonData);
         messageInput.value = "";
     }
 </script>

@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 import websockets
 
 # クライアントの管理用のセット
@@ -12,15 +14,20 @@ async def handle_client(websocket):  # 接続が確立された
     print("クライアントが接続しました。")
     try:
         # 過去のチャット履歴を送信
-        for message in chat_history:  # リストの中身をすべて送信する
-            await websocket.send(message)
+        for message in chat_history:  # リストの中身(JSON)をすべて送信する
+            await websocket.send(json.dumps(message))
 
         # 新しいクライアントのWebSocket接続をclientsセットに追加
         clients.add(websocket)
 
         async for message in websocket:
-            print(f"受信内容：{message}")
-            # チャット履歴をリストに追加
+            # 受信したJSONデータをPythonオブジェクトに変換
+            data = json.loads(message)
+            # dataオブジェクトには'message'と'gpt'が含まれる
+            client_id = data.get('client_id', '')
+            received_message = data.get('message', '')
+            print(f"受信ID：{client_id}　メッセージ:{received_message}")
+            # JSONチャット履歴をリストに追加
             chat_history.append(message)
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
             for client in clients:
