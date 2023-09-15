@@ -8,15 +8,16 @@ chat_history = []
 
 
 # クライアントからのメッセージを受信するコルーチン
-async def handle_client(websocket):
-    # 接続が確立された
+async def handle_client(websocket):  # 接続が確立された
     print("クライアントが接続しました。")
     try:
         # 過去のチャット履歴を送信
         for message in chat_history:  # リストの中身をすべて送信する
             await websocket.send(message)
+
         # 新しいクライアントのWebSocket接続をclientsセットに追加
         clients.add(websocket)
+
         async for message in websocket:
             print(f"受信内容：{message}")
             # チャット履歴をリストに追加
@@ -24,10 +25,11 @@ async def handle_client(websocket):
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
             for client in clients:
                 await client.send(message)
-    finally:
-        # クライアントが切断された場合、セットから削除
-        clients.remove(websocket)
+
+    finally:  # クライアントが切断された
         print(f"接続が切断されました。")
+        # クライアントのWebSocket接続をclientsセットから削除
+        clients.remove(websocket)
 
 
 # WebSocketサーバーを起動
