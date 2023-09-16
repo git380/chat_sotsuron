@@ -15,7 +15,7 @@ async def handle_client(websocket):  # 接続が確立された
     try:
         # 過去のチャット履歴を送信
         for message in chat_history:  # リストの中身(JSON)をすべて送信する
-            await websocket.send(json.dumps(message))
+            await websocket.send(message)
 
         # 新しいクライアントのWebSocket接続をclientsセットに追加
         clients.add(websocket)
