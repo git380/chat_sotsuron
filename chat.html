@@ -16,10 +16,47 @@
     // メッセージを受信
     webSocket.onmessage = (event) => {
         const chat = document.getElementById("chat");
-        const message = document.createElement("p");//pタグ作成
         const indata = JSON.parse(event.data);
-        message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
-        chat.appendChild(message);
+        const messageId = indata.messageId;
+
+        // すでに表示されているメッセージを検索
+        const existingMessage = document.getElementById(`message-${messageId}`);
+
+        if (existingMessage) {
+            // すでに表示されているメッセージがあれば、内容を更新
+            const checkbox = existingMessage.querySelector("input[type='checkbox']");
+            if (checkbox) {
+                checkbox.checked = indata.checked;
+            }
+        } else {
+            // 新しいメッセージを作成
+            const message = document.createElement("p");//pタグ作成
+            message.id = `message-${messageId}`;
+            message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
+
+            // チェックボックスを作成
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = indata.checked;
+
+            // チェックボックスが変更されたときの処理
+            checkbox.addEventListener("change", function () {
+                // チェックボックスの状態をサーバーに送信
+                const data = {
+                    "messageId": messageId,
+                    "client_id": indata.client_id,
+                    "message": indata.message,
+                    "checked": checkbox.checked
+                };
+                const jsonData = JSON.stringify(data);
+                webSocket.send(jsonData);
+            });
+
+            // チェックボックスをpタグの後に追加
+            message.appendChild(checkbox);
+            // messageをdivタグのchatの後に追加
+            chat.appendChild(message);
+        }
     };
 
     // 送信ボタンが押されると、入力された文字を送る
@@ -32,7 +69,8 @@
         const data = {
             "messageId": Date.now(),
             "client_id": clientId,
-            "message": message
+            "message": message,
+            "checked": false  // チェックボックスの初期状態
         };
         // JSONへ変換
         const jsonData = JSON.stringify(data);

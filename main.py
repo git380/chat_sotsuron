@@ -27,7 +27,8 @@ async def handle_client(websocket):  # 接続が確立された
             message_id = data.get('messageId', '')
             client_id = data.get('client_id', '')
             received_message = data.get('message', '')
-            print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}")
+            checked = data.get('checked', False)  # チェック状態を取得
+            print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}　チェック状態:{checked}")
             # JSONチャット履歴を辞書に追加
             chat_history[message_id] = message
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
