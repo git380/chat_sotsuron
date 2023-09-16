@@ -29,7 +29,11 @@
         const idInput = document.getElementById("idInput");
         const clientId = idInput.value;
         // JavaScriptオブジェクトを作成
-        const data = {"client_id": clientId, "message": message}
+        const data = {
+            "messageId": Date.now(),
+            "client_id": clientId,
+            "message": message
+        };
         // JSONへ変換
         const jsonData = JSON.stringify(data);
         // 送信

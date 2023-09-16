@@ -5,8 +5,8 @@ import websockets
 
 # クライアントの管理用のセット
 clients = set()
-# チャット履歴(リスト)
-chat_history = []
+# チャット履歴(辞書)
+chat_history = {}
 
 
 # クライアントからのメッセージを受信するコルーチン
@@ -14,7 +14,7 @@ async def handle_client(websocket):  # 接続が確立された
     print("クライアントが接続しました。")
     try:
         # 過去のチャット履歴を送信
-        for message in chat_history:  # リストの中身(JSON)をすべて送信する
+        for message_id, message in chat_history.items():  # 辞書の中身(JSON)をすべて送信する
             await websocket.send(message)
 
         # 新しいクライアントのWebSocket接続をclientsセットに追加
@@ -23,12 +23,13 @@ async def handle_client(websocket):  # 接続が確立された
         async for message in websocket:
             # 受信したJSONデータをPythonオブジェクトに変換
             data = json.loads(message)
-            # dataオブジェクトには'message'と'gpt'が含まれる
+            # dataオブジェクトには'messageId', 'client_id', 'message'が含まれる
+            message_id = data.get('messageId', '')
             client_id = data.get('client_id', '')
             received_message = data.get('message', '')
-            print(f"受信ID：{client_id}　メッセージ:{received_message}")
-            # JSONチャット履歴をリストに追加
-            chat_history.append(message)
+            print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}")
+            # JSONチャット履歴を辞書に追加
+            chat_history[message_id] = message
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
             for client in clients:
                 await client.send(message)
