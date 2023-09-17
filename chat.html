@@ -24,6 +24,16 @@
 
         if (existingMessage) {
             // すでに表示されているメッセージがあれば、内容を更新
+            // 未読・既読
+            const readStatus = existingMessage.querySelector("p.read-status");
+            if (readStatus) {
+                if (indata.checked) {
+                    readStatus.textContent = "既読";
+                } else {
+                    readStatus.textContent = "未読";
+                }
+            }
+            // チェックボックス
             const checkbox = existingMessage.querySelector("input[type='checkbox']");
             if (checkbox) {
                 checkbox.checked = indata.checked;
@@ -31,13 +41,33 @@
         } else {
             // 新しいメッセージを作成
             const message = document.createElement("p");//pタグ作成
+            // idにmessageIDを設定
             message.id = `message-${messageId}`;
+            // 表示内容
             message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
 
-            // チェックボックスを作成
+            const idInput = document.getElementById("idInput");
             const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = indata.checked;
+
+            // 未読・既読機能
+            if (idInput.value === indata.client_id) {
+                const check = document.createElement("p");
+                if (indata.checked) {
+                    check.textContent = "既読"
+                } else {
+                    check.textContent = "未読"
+                }
+                // 未読・既読ステータスを識別するためのクラスを追加
+                check.classList.add("read-status");
+                // 未読・既読をpタグの後に追加
+                message.appendChild(check);
+            } else {
+                // チェックボックスを作成
+                checkbox.type = "checkbox";
+                checkbox.checked = indata.checked;
+                // チェックボックスをpタグの後に追加
+                message.appendChild(checkbox);
+            }
 
             // チェックボックスが変更されたときの処理
             checkbox.addEventListener("change", function () {
@@ -52,8 +82,6 @@
                 webSocket.send(jsonData);
             });
 
-            // チェックボックスをpタグの後に追加
-            message.appendChild(checkbox);
             // messageをdivタグのchatの後に追加
             chat.appendChild(message);
         }
