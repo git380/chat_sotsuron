@@ -6,17 +6,39 @@
 </head>
 <body>
 <input type="text" id="idInput" placeholder="ID">
+<button onclick="startWebSocket()">参加</button>
 <input type="text" id="message" placeholder="メッセージを入力">
 <button onclick="sendMessage()">送信</button>
 <div id="chat"></div>
 
 <script>
-    const webSocket = new WebSocket("ws://localhost:8765");
+    let webSocket; // WebSocketを格納する変数
 
-    // メッセージを受信
-    webSocket.onmessage = (event) => {
+    // 参加ボタンが押されたときにWebSocketを開始
+    function startWebSocket() {
+        webSocket = new WebSocket("ws://localhost:8765");
+
+        // WebSocketの接続が開いたときの処理
+        webSocket.onopen = () => {
+            console.log("WebSocketが開かれました。");
+            // ここで何か追加の初期化処理を行うことができます
+        };
+
+        // メッセージを受信したときの処理
+        webSocket.onmessage = (event) => {
+            handleMessage(JSON.parse(event.data));
+        };
+
+        // WebSocketの接続が閉じたときの処理
+        webSocket.onclose = () => {
+            console.log("WebSocketが閉じられました。");
+            // ここで再接続などの処理を行うことができます
+        };
+    }
+
+    // メッセージを処理する関数
+    function handleMessage(indata) {
         const chat = document.getElementById("chat");
-        const indata = JSON.parse(event.data);
         const messageId = indata.messageId;
 
         // すでに表示されているメッセージを検索
@@ -85,7 +107,7 @@
             // messageをdivタグのchatの後に追加
             chat.appendChild(message);
         }
-    };
+    }
 
     // 送信ボタンが押されると、入力された文字を送る
     function sendMessage() {
