@@ -93,15 +93,10 @@
 
             // チェックボックスが変更されたときの処理
             checkbox.addEventListener("change", function () {
-                // チェックボックスの状態をサーバーに送信
-                const data = {
-                    "messageId": messageId,
-                    "client_id": indata.client_id,
-                    "message": indata.message,
-                    "checked": checkbox.checked
-                };
-                const jsonData = JSON.stringify(data);
-                webSocket.send(jsonData);
+                // チェックボックスの状態を代入
+                indata["checked"] = checkbox.checked
+                // JSONに戻してサーバへ送信
+                webSocket.send(JSON.stringify(indata));
             });
 
             // messageをdivタグのchatの後に追加
