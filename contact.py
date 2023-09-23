@@ -34,6 +34,7 @@ async def handle_client(websocket):  # 接続が確立された
                 history = json.loads(chat_history[message_id])
                 history['checked'].update(checked)
                 message = json.dumps(history)
+                print(f"chat_history更新：{history}")
             # JSONチャット履歴を辞書に追加
             chat_history[message_id] = message
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
