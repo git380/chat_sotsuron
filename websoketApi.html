@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AWS WebSocket チャット</title>
+</head>
+<body>
+    <H3>AWS WebSocket チャット</H3>
+    <input id="input" type="text" />
+    <button onclick="send()">送信</button>
+    <pre id="output"></pre>
+    <script>
+        const input = document.getElementById('input');
+        const output = document.getElementById('output');
+        const socket = new WebSocket("控えておいたAPI GatewayのWebSocket URL");
+        // WebSocket URL例 … wss://hogehoge.execute-api.ap-northeast-1.amazonaws.com/production
+
+        socket.onopen = function() {
+           output.innerHTML += "接続に成功しました\n";
+        };
+
+        socket.onmessage = function(e) {
+            output.innerHTML += "受信：" + e.data + "\n";
+        };
+
+        function send() {
+            socket.send(JSON.stringify(
+                {
+                    "action":"sendmsg",  // API Gatewayのルート名（ここでは"sendmsg"）と合わせる必要がある
+                    "data": input.value
+                }
+            ));
+            input.value = "";
+        }
+    </script>
+</body>
+</html>
