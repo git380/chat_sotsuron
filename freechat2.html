@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocketチャット</title>
+</head>
+<body>
+<input type="text" id="idInput" placeholder="ID">
+<button id="joinButton">参加</button>
+<br>
+<input type="text" id="messageInput" placeholder="メッセージ" required>
+<button id="sendButton" disabled>送信</button>
+<div id="chat"></div>
+
+<script>
+    const idInput = document.getElementById('idInput');
+    const joinButton = document.getElementById('joinButton');
+    const chat = document.getElementById("chat");
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    const webSocket = new WebSocket('ws://localhost:8765/');
+
+    joinButton.addEventListener('click', () => {
+        const clientId = idInput.value;
+        webSocket.send("サーバ:" + clientId);
+        idInput.disabled = true;
+        joinButton.disabled = true;
+        sendButton.disabled = false; // 参加後に送信ボタンを有効にする
+    });
+
+    sendButton.addEventListener('click', () => {
+        const message = messageInput.value;
+        webSocket.send(message);
+        messageInput.value = '';
+    });
+
+    webSocket.addEventListener('message', (event) => {
+        const indata = JSON.parse(event.data);
+        const message = document.createElement("p");
+        message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
+        chat.appendChild(message);
+    });
+</script>
+</body>
+</html>
