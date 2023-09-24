@@ -1,21 +1,18 @@
-import sys
 import json
 import boto3
 import botocore
 
-g_dynamodb = boto3.resource('dynamodb')
-g_apigw_management = boto3.client('apigatewaymanagementapi', endpoint_url=F"この後出てくるAPI Gatewayの接続URL")
+dynamodb = boto3.resource('dynamodb')
+apigw = boto3.client('apigatewaymanagementapi', endpoint_url=F"この後出てくるAPI Gatewayの接続URL")
 # 接続URL例 … https://hogehoge.execute-api.ap-northeast-1.amazonaws.com/production (@マーク以降は不要)
 
 
 def lambda_handler(event, context):
     dbname = '作成したDynamoDBの名前'
-    table = g_dynamodb.Table(dbname)
+    table = dynamodb.Table(dbname)
     post_data = json.loads(event.get('body', '{}')).get('data')
     print(post_data)
-    domain_name = event.get('requestContext', {}).get('domainName')
-    stage = event.get('requestContext', {}).get('stage')
-    # コネクションIDを取得
+    # テーブルから接続中のコネクションIDを取得
     items = table.scan(ProjectionExpression='id').get('Items')
     if items is None:
         return {
@@ -29,14 +26,8 @@ def lambda_handler(event, context):
         try:
             print(item)
             # コネクションIDを指定してクライアントにデータをPOST
-            _ = g_apigw_management.post_to_connection(ConnectionId=item['id'], Data=post_data)
+            apigw.post_to_connection(ConnectionId=item['id'], Data=post_data)
         except botocore.exceptions.ClientError as e:
             print('Failed')
             print(e.response)
-    return {
-        'statusCode': 200,
-        'headers': {
-            "Access-Control-Allow-Origin": "*"
-        },
-        'body': json.dumps({"result": 0}, ensure_ascii=False)
-    }
+    return {}
