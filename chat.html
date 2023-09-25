@@ -16,7 +16,7 @@
 
     // 参加ボタンが押されたときにWebSocketを開始
     function startWebSocket() {
-        webSocket = new WebSocket("ws://localhost:8765");
+        webSocket = new WebSocket("wss://hogehoge.execute-api.ap-northeast-1.amazonaws.com/production");
 
         // WebSocketの接続が開いたときの処理
         webSocket.onopen = () => {
