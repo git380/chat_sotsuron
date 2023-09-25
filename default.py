@@ -2,12 +2,15 @@ import json
 import boto3
 
 dynamodb = boto3.resource('dynamodb')
-# ApiGatewayManagementApi オブジェクトの初期化
-apigw = boto3.client('apigatewaymanagementapi', endpoint_url=F"この後出てくるAPI Gatewayの接続URL")
-# 接続URL例 … https://hogehoge.execute-api.ap-northeast-1.amazonaws.com/production (@マーク以降は不要)
 
 
 def lambda_handler(event, context):
+    # ApiGatewayManagementApi オブジェクトの初期化
+    domain = event["requestContext"]["domainName"]
+    stage = event["requestContext"]["stage"]
+
+    apigw = boto3.client('apigatewaymanagementapi', endpoint_url=f'https://{domain}/{stage}')
+
     # テーブルを取得
     dbname = '作成したDynamoDBの名前'
     table = dynamodb.Table(dbname)
