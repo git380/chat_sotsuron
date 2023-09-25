@@ -1,13 +1,11 @@
 import boto3
-import os
 
 dynamodb = boto3.resource('dynamodb')
 
 
 def lambda_handler(event, context):
     # テーブルを取得
-    dbname = '作成したDynamoDBの名前'
-    table = dynamodb.Table(dbname)
+    table = dynamodb.Table('作成したDynamoDBの名前')
     # コネクションIDを取得
     connection_id = event['requestContext']['connectionId']
     print(f'Connection ID: {connection_id}')

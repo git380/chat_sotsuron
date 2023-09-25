@@ -6,21 +6,25 @@ dynamodb = boto3.resource('dynamodb')
 
 def lambda_handler(event, context):
     # ApiGatewayManagementApi オブジェクトの初期化
-    domain = event["requestContext"]["domainName"]
-    stage = event["requestContext"]["stage"]
-
-    apigw = boto3.client('apigatewaymanagementapi', endpoint_url=f'https://{domain}/{stage}')
+    apigw = boto3.client(
+        'apigatewaymanagementapi',
+        endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}'
+    )
 
     # テーブルを取得
-    dbname = '作成したDynamoDBの名前'
-    table = dynamodb.Table(dbname)
+    table = dynamodb.Table('作成したDynamoDBの名前')
+
     # eventのbody(送信されたチャットの内容)を取得
-    post_data = json.loads(event.get('body', '{}')).get('data')
-    print(post_data)
+    message = event['body']
+    # 受信したJSONデータをPythonオブジェクトに変換
+    data = json.loads(message)
+    # dataオブジェクトのdataに送信内容が含まれる。
+    message_data = data.get('data')
+    print(message_data)
     # テーブルから接続中のコネクションIDを取得
-    items = table.scan(ProjectionExpression='id').get('Items')
-    for item in items:
-        print(item)
+    connection_ids = table.scan(ProjectionExpression='id').get('Items')
+    for connection_id in connection_ids:
+        print(connection_id)
         # コネクションIDを指定してクライアントにデータをPOST
-        apigw.post_to_connection(ConnectionId=item['id'], Data=post_data)
+        apigw.post_to_connection(ConnectionId=connection_id['id'], Data=message)
     return {}
