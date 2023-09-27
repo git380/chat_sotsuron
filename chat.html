@@ -5,6 +5,7 @@
     <title>WebSocket Chat</title>
 </head>
 <body>
+<input type="text" id="toNameInput" placeholder="名前"><br>
 <input type="text" id="toInput" placeholder="To"><br>
 <input type="text" id="idInput" placeholder="ID">
 <button onclick="startWebSocket()">参加</button>
@@ -79,7 +80,12 @@
                 // idにmessageIDを設定
                 message.id = `message-${messageId}`;
                 // 表示内容
-                message.textContent = indata.client_id + "さん | " + "チャット:" + indata.message;
+                if (indata.client_id === idInput.value) {
+                    message.textContent = "自分 | チャット:" + indata.message;
+                } else {
+                    const toName = document.getElementById("toNameInput");
+                    message.textContent = toName.value + "さん | " + "チャット:" + indata.message;
+                }
 
                 const checkbox = document.createElement("input");
                 // 未読・既読機能
