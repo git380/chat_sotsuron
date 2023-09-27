@@ -8,7 +8,7 @@
 <input type="text" id="idInput" placeholder="ID">
 <button onclick="startWebSocket()">参加</button>
 <input type="text" id="message" placeholder="メッセージを入力">
-<button onclick="sendMessage()">送信</button>
+<button id="bms_send_btn" onclick="sendMessage()" disabled>送信</button>
 <div id="chat"></div>
 
 <script>
@@ -22,6 +22,15 @@
         webSocket.onopen = () => {
             console.log("WebSocketが開かれました。");
             // ここで何か追加の初期化処理を行うことができます
+            document.getElementById('bms_send_btn').disabled = false; // 参加後に送信ボタンを有効にする
+            // json履歴受け取り
+            fetch('chat_history.json')
+                .then(data => data.json())
+                .then(function (chatHistory) {
+                    for (const key in chatHistory) {
+                        handleMessage(JSON.parse(chatHistory[key]));
+                    }
+                });
         };
 
         // メッセージを受信したときの処理
