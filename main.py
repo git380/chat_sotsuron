@@ -18,7 +18,7 @@ async def handle_client(websocket):  # 接続が確立された
             # 受信したJSONデータをPythonオブジェクトに変換
             data = json.loads(message)
             # dataオブジェクトには'messageId', 'client_id', 'message'が含まれる
-            message_id = data.get('messageId', '')
+            message_id = data.get('message_id', '')
             client_id = data.get('client_id', '')
             received_message = data.get('message', '')
             checked = data.get('checked', False)  # チェック状態を取得
