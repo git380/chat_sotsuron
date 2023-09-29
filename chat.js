@@ -18,10 +18,8 @@ function startWebSocket() {
                 }
             });
     };
-
     // メッセージを受信したときの処理
     webSocket.onmessage = event => handleMessage(JSON.parse(event.data));
-
     // WebSocketの接続が閉じたときの処理
     webSocket.onclose = () => console.log('WebSocketが閉じられました。');
 }
@@ -36,29 +34,18 @@ function handleMessage(data) {
         // すでに表示されているメッセージを検索
         const existingMessage = document.getElementById(`message-${data['message_id']}`);
 
-        // 更新 or 作成
-        if (existingMessage) {
-            // 表示されている内容を更新
-            // 未読・既読
-            const readStatus = existingMessage.querySelector('p.read-status');
-            if (readStatus) {
-                readStatus.textContent = data['checked'] ? '既読' : '未読';
-            }
-        } else {
+        // 作成 or 更新
+        if (!existingMessage) {
             // 新しいメッセージを作成
             const message = document.createElement('p');//pタグ作成
             // idにmessage_idを設定
             message.id = `message-${data['message_id']}`;
             // 表示内容
             if (isMyMessage) {
+                // 自分のmessage作成
                 message.textContent = '自分 | チャット:' + data['message'];
-            } else {
-                const toName = document.getElementById('toNameInput');
-                message.textContent = toName.value + 'さん | ' + 'チャット:' + data['message'];
-            }
 
-            // 未読・既読機能
-            if (isMyMessage) {
+                // 未読・既読作成
                 const check = document.createElement('p');
                 check.textContent = data['checked'] ? '既読' : '未読';
                 // 未読・既読ステータスを識別するためのクラスを追加
@@ -66,12 +53,17 @@ function handleMessage(data) {
                 // 未読・既読をpタグの後に追加
                 message.appendChild(check);
             } else {
-                const checkbox = document.createElement('input');
+                // 相手のmessage作成
+                const toName = document.getElementById('toNameInput');
+                message.textContent = toName.value + 'さん | ' + 'チャット:' + data['message'];
+
                 // チェックボックスを作成
+                const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = data['checked'];
                 // チェックボックスをpタグの後に追加
                 message.appendChild(checkbox);
+
                 // チェックボックスが変更されたときの処理
                 checkbox.addEventListener('change', () => {
                     // チェックボックスの状態を代入
@@ -82,6 +74,10 @@ function handleMessage(data) {
             }
             // messageをdivタグのchatの後に追加
             document.getElementById('chat').appendChild(message);
+        } else {
+            // すでに表示されているメッセージがあれば 未読・既読 を更新
+            const readStatus = existingMessage.querySelector('p.read-status');
+            if (readStatus) readStatus.textContent = data['checked'] ? '既読' : '未読';
         }
     }
 }
