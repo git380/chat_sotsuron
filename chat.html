@@ -3,15 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>WebSocket Chat</title>
+    <link type="text/css" rel="stylesheet" href="chat.css"/>
 </head>
 <body>
 <input type="text" id="toNameInput" placeholder="名前"><br>
 <input type="text" id="toInput" placeholder="To"><br>
 <input type="text" id="idInput" placeholder="ID">
 <button onclick="startWebSocket()">参加</button>
-<input type="text" id="message" placeholder="メッセージを入力">
-<button id="bms_send_btn" onclick="sendMessage()" disabled>送信</button>
-<div id="chat"></div>
+<!-- チャットの外側部分① -->
+<div id="messages_container">
+    <!-- ヘッダー部分② -->
+    <div id="chat_header">
+        <div id="status_icon">●</div>
+        <div id="chat_name">チャット</div>
+    </div>
+
+    <!-- タイムライン部分③ -->
+    <div id="chat"></div>
+
+    <!-- テキストボックス、送信ボタン④ -->
+    <div id="send_block">
+        <input type="text" id="message" placeholder="メッセージを入力">
+        <button id="sendButton" onclick="sendMessage()" disabled>送信</button>
+    </div>
+</div>
 
 <script src="chat.js"></script>
 </body>

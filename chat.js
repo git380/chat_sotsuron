@@ -7,8 +7,8 @@ function startWebSocket() {
     // WebSocketの接続が開いたときの処理
     webSocket.onopen = () => {
         console.log('WebSocketが開かれました。');
-        // ここで何か追加の初期化処理を行うことができます
-        document.getElementById('bms_send_btn').disabled = false; // 参加後に送信ボタンを有効にする
+        // 参加後に送信ボタンを有効にする
+        document.getElementById('sendButton').disabled = false;
         // json履歴受け取り
         fetch('chat_history.json')
             .then(data => data.json())
@@ -37,32 +37,38 @@ function handleMessage(data) {
         // 作成 or 更新
         if (!existingMessage) {
             // 新しいメッセージを作成
-            const message = document.createElement('p');//pタグ作成
+            const messageContainer = document.createElement('div');
+            const messageBox = document.createElement('div');
+            const messageDisplay = document.createElement('div');
+            const messageInfo = document.createElement('div');
+            messageContainer.classList.add('message_container');
+            messageBox.classList.add('message_box');
+            messageDisplay.classList.add('message_display');
             // idにmessage_idを設定
-            message.id = `message-${data['message_id']}`;
+            messageContainer.id = `message-${data['message_id']}`;
+
             // 表示内容
             if (isMyMessage) {
                 // 自分のmessage作成
-                message.textContent = '自分 | チャット:' + data['message'];
+                messageContainer.classList.add('right_message');
+                messageDisplay.textContent = data['message'];
+                messageBox.appendChild(messageDisplay);
 
                 // 未読・既読作成
-                const check = document.createElement('p');
-                check.textContent = data['checked'] ? '既読' : '未読';
-                // 未読・既読ステータスを識別するためのクラスを追加
-                check.classList.add('read-status');
-                // 未読・既読をpタグの後に追加
-                message.appendChild(check);
+                messageInfo.classList.add('info_right');
+                messageInfo.textContent = data['checked'] ? '既読' : '未読';
+                messageBox.appendChild(messageInfo);
             } else {
                 // 相手のmessage作成
-                const toName = document.getElementById('toNameInput');
-                message.textContent = toName.value + 'さん | ' + 'チャット:' + data['message'];
+                messageContainer.classList.add('left_message');
+                messageDisplay.textContent = data['message'];
+                messageBox.appendChild(messageDisplay);
 
                 // チェックボックスを作成
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = data['checked'];
-                // チェックボックスをpタグの後に追加
-                message.appendChild(checkbox);
+                messageBox.appendChild(checkbox);
 
                 // チェックボックスが変更されたときの処理
                 checkbox.addEventListener('change', () => {
@@ -71,12 +77,23 @@ function handleMessage(data) {
                     // JSONに戻してサーバへ送信
                     webSocket.send(JSON.stringify(data));
                 });
+
+                // 名前作成
+                messageInfo.classList.add('info_left');
+                messageInfo.textContent = document.getElementById('toNameInput').value;
+                messageBox.appendChild(messageInfo);
             }
+            messageContainer.appendChild(messageBox);
             // messageをdivタグのchatの後に追加
-            document.getElementById('chat').appendChild(message);
+            document.getElementById('chat').appendChild(messageContainer);
+
+            // wraparound_clear
+            const clearDiv = document.createElement('div');
+            clearDiv.classList.add('wraparound_clear');
+            document.getElementById('chat').appendChild(clearDiv);
         } else {
             // すでに表示されているメッセージがあれば 未読・既読 を更新
-            const readStatus = existingMessage.querySelector('p.read-status');
+            const readStatus = existingMessage.querySelector('.name_right');
             if (readStatus) readStatus.textContent = data['checked'] ? '既読' : '未読';
         }
     }
