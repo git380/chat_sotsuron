@@ -9,7 +9,29 @@ function startWebSocket() {
         console.log('WebSocketが開かれました。');
         // 参加後に送信ボタンを有効にする
         document.getElementById('sendButton').disabled = false;
-        // json履歴受け取り
+
+        // オンラインステータス送信
+        webSocket.send(JSON.stringify({
+            'data_type': 'status',
+            'client_id': document.getElementById('idInput').value,
+            'status': true  // オンライン状態
+        }));
+        // jsonステータス履歴受け取り
+        fetch('status_history.json')
+            .then(data => data.json())
+            .then(statusHistory => {
+                const statusIcon = document.getElementById("status_icon");
+                try {
+                    const statusInfo = JSON.parse(statusHistory[document.getElementById('toInput').value])
+                    statusIcon.style.color = statusInfo['status'] ? 'green' : 'red';
+                } catch (e) {
+                    statusIcon.style.color = 'red';
+                }
+                const chatName = document.getElementById("chat_name");
+                chatName.parentNode.insertBefore(statusIcon, chatName);
+            });
+
+        // jsonチャット履歴受け取り
         fetch('chat_history.json')
             .then(data => data.json())
             .then(chatHistory => {
@@ -19,7 +41,17 @@ function startWebSocket() {
             });
     };
     // メッセージを受信したときの処理
-    webSocket.onmessage = event => handleMessage(JSON.parse(event.data));
+    webSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        if (data['data_type'] === 'status') {
+            const statusIcon = document.getElementById("status_icon");
+            statusIcon.style.color = data['status'] ? 'green' : 'red';
+            const chatName = document.getElementById("chat_name");
+            chatName.parentNode.insertBefore(statusIcon, chatName);
+        } else {
+            handleMessage(data);
+        }
+    };
     // WebSocketの接続が閉じたときの処理
     webSocket.onclose = () => console.log('WebSocketが閉じられました。');
 }
@@ -114,3 +146,13 @@ function sendMessage() {
     webSocket.send(JSON.stringify(data));
     messageInput.value = '';
 }
+
+// ページが閉じられる前に実行
+window.addEventListener("beforeunload", () => {
+    webSocket.send(JSON.stringify({
+        'data_type': 'status',
+        'client_id': document.getElementById('idInput').value,
+        'status': false
+    }));
+});
+
