@@ -5,18 +5,12 @@ import websockets
 
 # クライアントの管理用のセット
 clients = set()
-# チャット履歴(辞書)
-chat_history = {}
 
 
 # クライアントからのメッセージを受信するコルーチン
 async def handle_client(websocket):  # 接続が確立された
     print("クライアントが接続しました。")
     try:
-        # 過去のチャット履歴を送信
-        for message_id, message in chat_history.items():  # 辞書の中身(JSON)をすべて送信する
-            await websocket.send(message)
-
         # 新しいクライアントのWebSocket接続をclientsセットに追加
         clients.add(websocket)
 
@@ -24,19 +18,24 @@ async def handle_client(websocket):  # 接続が確立された
             # 受信したJSONデータをPythonオブジェクトに変換
             data = json.loads(message)
             # dataオブジェクトには'messageId', 'client_id', 'message'が含まれる
-            message_id = data.get('messageId', '')
+            message_id = data.get('message_id', '')
             client_id = data.get('client_id', '')
             received_message = data.get('message', '')
             checked = data.get('checked', {})  # チェック状態を取得
             print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}　チェック状態:{checked}")
-            if message_id in chat_history.keys():
+            # JSONのチャット履歴を追加
+            with open('contact_history.json', 'r', encoding='utf-8') as json_file_r:
+                contact_history = json.load(json_file_r)
+            if str(message_id) in contact_history.keys():
                 # チェック状態更新
-                history = json.loads(chat_history[message_id])
+                history = json.loads(contact_history[str(message_id)])
                 history['checked'].update(checked)
                 message = json.dumps(history)
                 print(f"chat_history更新：{history}")
-            # JSONチャット履歴を辞書に追加
-            chat_history[message_id] = message
+            # JSONチャット履歴を辞書に追加(キーはStringに変換)
+            contact_history[str(message_id)] = message
+            with open('contact_history.json', 'w', encoding='utf-8') as json_file_w:
+                json.dump(contact_history, json_file_w, ensure_ascii=False, indent=4)
             # クライアントからのメッセージをすべてのクライアントにブロードキャスト
             for client in clients:
                 await client.send(message)
