@@ -2,8 +2,7 @@ let webSocket; // WebSocketを格納する変数
 
 // 参加ボタンが押されたときにWebSocketを開始
 function startWebSocket() {
-    webSocket = new WebSocket("wss://hogehoge.execute-api.ap-northeast-1.amazonaws.com/production");
-
+    webSocket = new WebSocket('wss://4wxmlgu1l7.execute-api.us-east-1.amazonaws.com/production');
     // WebSocketの接続が開いたときの処理
     webSocket.onopen = () => {
         console.log('WebSocketが開かれました。');
@@ -32,13 +31,19 @@ function startWebSocket() {
             });
 
         // jsonチャット履歴受け取り
-        fetch('chat_history.json')
-            .then(data => data.json())
-            .then(chatHistory => {
+        fetch('https://ee463ao4za.execute-api.us-east-1.amazonaws.com/get_test_chat_json', {
+            method: 'POST',
+            body: 'chat_history',
+            headers: {'Content-Type': 'text/plain'}
+        })
+            .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
+            .then(data => {
+                const chatHistory = JSON.parse(data)
                 for (const key in chatHistory) {
                     handleMessage(JSON.parse(chatHistory[key]));
                 }
-            });
+            })
+            .catch(error => console.error('エラー:', error));
     };
     // メッセージを受信したときの処理
     webSocket.onmessage = (event) => {
