@@ -21,7 +21,7 @@ async def handle_client(websocket):  # 接続が確立された
                 # JSONのテータス履歴を追加
                 with open('status_history.json', 'r', encoding='utf-8') as json_file_r:
                     status_history = json.load(json_file_r)
-                # JSONテータス履歴を辞書に追加(キーはStringに変換)
+                # JSONテータス履歴を辞書に追加
                 status_history[data.get('client_id', '')] = message
                 # テータス履歴をJSONで保存
                 with open('status_history.json', 'w', encoding='utf-8') as json_file_w:

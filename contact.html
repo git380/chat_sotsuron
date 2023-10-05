@@ -16,19 +16,25 @@
 
     // 参加ボタンが押されたときにWebSocketを開始
     function startWebSocket() {
-        webSocket = new WebSocket('ws://localhost:8765');
+        webSocket = new WebSocket('wss://xm4319z6z4.execute-api.us-east-1.amazonaws.com/production');
 
         // WebSocketの接続が開いたときの処理
         webSocket.onopen = () => {
             console.log('WebSocketが開かれました。');
             // json履歴受け取り
-            fetch('contact_history.json')
-                .then(data => data.json())
-                .then(contactHistory => {
+            fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
+                method: 'POST',
+                body: 'contact_history',
+                headers: {'Content-Type': 'text/plain'}
+            })
+                .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
+                .then(data => {
+                    const contactHistory = JSON.parse(data)
                     for (const key in contactHistory) {
                         handleMessage(JSON.parse(contactHistory[key]));
                     }
-                });
+                })
+                .catch(error => console.error('エラー:', error));
         };
         // メッセージを受信したときの処理
         webSocket.onmessage = event => handleMessage(JSON.parse(event.data));

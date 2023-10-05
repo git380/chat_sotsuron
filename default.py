@@ -13,7 +13,7 @@ def lambda_handler(event, context):
     )
 
     # テーブルを取得
-    table = dynamodb.Table('test_chat')
+    table = dynamodb.Table('chat')
     # テーブルから接続中のコネクションIDを取得
     clients = table.scan(ProjectionExpression='id').get('Items')
 
@@ -21,28 +21,44 @@ def lambda_handler(event, context):
     message = event['body']
     # 受信したJSONデータをPythonオブジェクトに変換
     data = json.loads(message)
-    # dataオブジェクトには'messageId', 'client_id', 'message'が含まれる
-    message_id = data.get('message_id', '')
-    client_id = data.get('client_id', '')
-    received_message = data.get('message', '')
-    checked = data.get('checked', False)  # チェック状態を取得
-    print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}　チェック状態:{checked}")
+    if data.get('data_type', '') == 'status':
+        status_history = {}
+        # バケット名,オブジェクト名を指定
+        s3_obj = s3.Bucket('websocethistories').Object('status_history.json')
+        # JSONのテータス履歴を追加
+        try:
+            response = s3_obj.get()
+            # json -> 辞書型へ変換
+            status_history = json.loads(response['Body'].read())
+        except:
+            print('ファイルがありません')
+        # JSONテータス履歴を辞書に追加
+        status_history[data.get('client_id', '')] = message
+        # テータス履歴をJSONで保存
+        s3_obj.put(Body=json.dumps(status_history))
+    else:
+        # dataオブジェクトには'messageId', 'client_id', 'message'が含まれる
+        message_id = data.get('message_id', '')
+        client_id = data.get('client_id', '')
+        received_message = data.get('message', '')
+        checked = data.get('checked', False)  # チェック状態を取得
+        print(f"ID:{message_id}　受信ID：{client_id}　メッセージ:{received_message}　チェック状態:{checked}")
 
-    # チャット履歴をAmazon S3で管理
-    chat_history = {}
-    # バケット名,オブジェクト名を指定
-    s3_obj = s3.Bucket('websockethistory').Object('chat_history.json')
-    # チャット履歴を読み込む
-    try:
-        response = s3_obj.get()
-        # json -> 辞書型へ変換
-        chat_history = json.loads(response['Body'].read())
-    except:
-        print('ファイルがありません')
-    # JSONチャット履歴を辞書に追加
-    chat_history[str(message_id)] = message
-    # チャット履歴をjsonで保存する
-    s3_obj.put(Body=json.dumps(chat_history))
+        # チャット履歴をAmazon S3で管理
+        chat_history = {}
+        # バケット名,オブジェクト名を指定
+        s3_obj = s3.Bucket('websocethistories').Object('chat_history.json')
+        # チャット履歴を読み込む
+        try:
+            response = s3_obj.get()
+            # json -> 辞書型へ変換
+            chat_history = json.loads(response['Body'].read())
+        except:
+            print('ファイルがありません')
+        # JSONチャット履歴を辞書に追加
+        chat_history[str(message_id)] = message
+        # チャット履歴をjsonで保存する
+        s3_obj.put(Body=json.dumps(chat_history))
 
     # クライアントからのメッセージをすべてのクライアントにブロードキャスト
     for client in clients:

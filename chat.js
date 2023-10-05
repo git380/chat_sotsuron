@@ -1,8 +1,17 @@
+fetch('https://static.tts.quest/voicevox_speakers.json')
+    .then(response => response.json())
+    .then(speakers => speakers.forEach(speaker => {
+        const option = document.createElement('option');
+        option.value = option.text = speaker;
+        document.getElementById('speakerSelect').appendChild(option);
+    }))
+    .catch(error => console.error('Error fetching speakers:', error));
+
 let webSocket; // WebSocketを格納する変数
 
 // 参加ボタンが押されたときにWebSocketを開始
 function startWebSocket() {
-    webSocket = new WebSocket('wss://4wxmlgu1l7.execute-api.us-east-1.amazonaws.com/production');
+    webSocket = new WebSocket('wss://wnukwbocq5.execute-api.us-east-1.amazonaws.com/production');
     // WebSocketの接続が開いたときの処理
     webSocket.onopen = () => {
         console.log('WebSocketが開かれました。');
@@ -16,9 +25,14 @@ function startWebSocket() {
             'status': true  // オンライン状態
         }));
         // jsonステータス履歴受け取り
-        fetch('status_history.json')
-            .then(data => data.json())
-            .then(statusHistory => {
+        fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
+            method: 'POST',
+            body: 'status_history',
+            headers: {'Content-Type': 'text/plain'}
+        })
+            .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
+            .then(data => {
+                const statusHistory = JSON.parse(data)
                 const statusIcon = document.getElementById("status_icon");
                 try {
                     const statusInfo = JSON.parse(statusHistory[document.getElementById('toInput').value])
@@ -28,10 +42,11 @@ function startWebSocket() {
                 }
                 const chatName = document.getElementById("chat_name");
                 chatName.parentNode.insertBefore(statusIcon, chatName);
-            });
+            })
+            .catch(error => console.error('エラー:', error));
 
         // jsonチャット履歴受け取り
-        fetch('https://ee463ao4za.execute-api.us-east-1.amazonaws.com/get_test_chat_json', {
+        fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
             method: 'POST',
             body: 'chat_history',
             headers: {'Content-Type': 'text/plain'}
@@ -128,9 +143,21 @@ function handleMessage(data) {
             const clearDiv = document.createElement('div');
             clearDiv.classList.add('wraparound_clear');
             document.getElementById('chat').appendChild(clearDiv);
+
+            // message_box クラスを持つ新しいメッセージ要素にクリックイベントトリスナーを追加
+            messageBox.addEventListener('click', () => {
+                if (document.getElementById('mode').checked) {
+                    // クリックされた要素内のテキストコンテンツを取得
+                    // .message_display クラスを持つ要素のテキストを取得し、アラートとして表示
+                    new TtsQuestV3Voicevox(
+                        document.getElementById('speakerSelect').selectedIndex,
+                        messageDisplay.textContent
+                    ).play();
+                }
+            });
         } else {
             // すでに表示されているメッセージがあれば 未読・既読 を更新
-            const readStatus = existingMessage.querySelector('.name_right');
+            const readStatus = existingMessage.querySelector('.info_right');
             if (readStatus) readStatus.textContent = data['checked'] ? '既読' : '未読';
         }
     }
@@ -150,6 +177,31 @@ function sendMessage() {
     // JSONへ変換して送信
     webSocket.send(JSON.stringify(data));
     messageInput.value = '';
+}
+
+// Audioクラスを継承して新しいクラスTtsQuestV3Voicevoxを定義する
+class TtsQuestV3Voicevox extends Audio {
+    constructor(speakerId, text) {
+        super(); // 親クラスのコンストラクターを呼び出す
+        // 音声合成のメソッド#mainを呼び出す
+        this.#main(this, new URLSearchParams({speaker: speakerId, text: text}));
+    }
+
+    // 非公開メソッド#main - 音声合成リクエストをAPIに送信して音声を取得する
+    #main(owner, query) {
+        if (owner.src.length > 0) return;
+        fetch('https://api.tts.quest/v3/voicevox/synthesis' + '?' + query.toString())
+            .then(response => response.json())
+            .then(response => {
+                if (typeof response['retryAfter'] !== 'undefined') {
+                    setTimeout(owner.#main, 1000 * (1 + response['retryAfter']), owner, query);
+                } else if (typeof response['mp3StreamingUrl'] !== 'undefined') {
+                    owner.src = response['mp3StreamingUrl'];
+                } else if (typeof response['mp3StreamingUrl'] !== 'undefined') {
+                    throw new Error(response['mp3StreamingUrl']);
+                } else throw new Error("serverError");
+            });
+    }
 }
 
 // ページが閉じられる前に実行
