@@ -22,14 +22,13 @@
         webSocket.onopen = () => {
             console.log('WebSocketが開かれました。');
             // json履歴受け取り
-            fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
+            fetch('https://erygod339e.execute-api.us-east-1.amazonaws.com/rest', {
                 method: 'POST',
                 body: 'contact_history',
                 headers: {'Content-Type': 'text/plain'}
             })
                 .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
-                .then(data => {
-                    const contactHistory = JSON.parse(data)
+                .then(contactHistory => {
                     for (const key in contactHistory) {
                         handleMessage(JSON.parse(contactHistory[key]));
                     }

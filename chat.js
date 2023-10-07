@@ -25,35 +25,32 @@ function startWebSocket() {
             'status': true  // オンライン状態
         }));
         // jsonステータス履歴受け取り
-        fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
+        fetch('https://erygod339e.execute-api.us-east-1.amazonaws.com/rest', {
             method: 'POST',
             body: 'status_history',
             headers: {'Content-Type': 'text/plain'}
         })
             .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
-            .then(data => {
-                const statusHistory = JSON.parse(data)
+            .then(statusHistory => {
                 const statusIcon = document.getElementById("status_icon");
-                try {
-                    const statusInfo = JSON.parse(statusHistory[document.getElementById('toInput').value])
-                    statusIcon.style.color = statusInfo['status'] ? 'green' : 'red';
-                } catch (e) {
-                    statusIcon.style.color = 'red';
-                }
+                const statusInfo = JSON.parse(statusHistory[document.getElementById('toInput').value])
+                statusIcon.style.color = statusInfo['status'] ? 'green' : 'red';
                 const chatName = document.getElementById("chat_name");
                 chatName.parentNode.insertBefore(statusIcon, chatName);
             })
-            .catch(error => console.error('エラー:', error));
+            .catch(error => {
+                console.error('エラー:', error)
+                document.getElementById("status_icon").style.color = 'red'
+            });
 
         // jsonチャット履歴受け取り
-        fetch('https://n5cserh71j.execute-api.us-east-1.amazonaws.com/default/post', {
+        fetch('https://erygod339e.execute-api.us-east-1.amazonaws.com/rest', {
             method: 'POST',
             body: 'chat_history',
             headers: {'Content-Type': 'text/plain'}
         })
             .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok.'))
-            .then(data => {
-                const chatHistory = JSON.parse(data)
+            .then(chatHistory => {
                 for (const key in chatHistory) {
                     handleMessage(JSON.parse(chatHistory[key]));
                 }
@@ -64,10 +61,13 @@ function startWebSocket() {
     webSocket.onmessage = (event) => {
         const data = JSON.parse(event.data)
         if (data['data_type'] === 'status') {
-            const statusIcon = document.getElementById("status_icon");
-            statusIcon.style.color = data['status'] ? 'green' : 'red';
-            const chatName = document.getElementById("chat_name");
-            chatName.parentNode.insertBefore(statusIcon, chatName);
+            // 相手のステータスのみ更新
+            if (data['client_id'] === document.getElementById('toInput').value) {
+                const statusIcon = document.getElementById("status_icon");
+                statusIcon.style.color = data['status'] ? 'green' : 'red';
+                const chatName = document.getElementById("chat_name");
+                chatName.parentNode.insertBefore(statusIcon, chatName);
+            }
         } else {
             handleMessage(data);
         }
@@ -137,12 +137,13 @@ function handleMessage(data) {
             }
             messageContainer.appendChild(messageBox);
             // messageをdivタグのchatの後に追加
-            document.getElementById('chat').appendChild(messageContainer);
+            const chat = document.getElementById('chat');
+            chat.appendChild(messageContainer);
 
             // wraparound_clear
             const clearDiv = document.createElement('div');
             clearDiv.classList.add('wraparound_clear');
-            document.getElementById('chat').appendChild(clearDiv);
+            chat.appendChild(clearDiv);
 
             // message_box クラスを持つ新しいメッセージ要素にクリックイベントトリスナーを追加
             messageBox.addEventListener('click', () => {
@@ -155,6 +156,9 @@ function handleMessage(data) {
                     ).play();
                 }
             });
+
+            // スクロールを一番下に移動
+            chat.scrollTop = chat.scrollHeight;
         } else {
             // すでに表示されているメッセージがあれば 未読・既読 を更新
             const readStatus = existingMessage.querySelector('.info_right');
@@ -178,6 +182,14 @@ function sendMessage() {
     webSocket.send(JSON.stringify(data));
     messageInput.value = '';
 }
+
+// Tabで送信
+document.getElementById('sendButton').addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        document.getElementById('sendButton').click();
+    }
+});
 
 // Audioクラスを継承して新しいクラスTtsQuestV3Voicevoxを定義する
 class TtsQuestV3Voicevox extends Audio {
